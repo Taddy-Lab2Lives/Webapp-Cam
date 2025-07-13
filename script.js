@@ -16,6 +16,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (devices.length === 0) {
         initializeDefaultDevices();
     }
+    
+    // Set default view mode to "category"
+    document.getElementById('viewMode').value = 'category';
+    
     updateDisplay();
     initializeCharts();
 });
@@ -593,6 +597,10 @@ function resetToDefault() {
         devices = [];
         localStorage.removeItem('electricityDevices');
         initializeDefaultDevices();
+        
+        // Set view mode back to category
+        document.getElementById('viewMode').value = 'category';
+        
         updateDisplay();
         alert('Đã reset về dữ liệu mặc định thành công!');
     }
