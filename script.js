@@ -301,10 +301,13 @@ function initializeBarChart() {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 title: {
-                    display: true,
-                    text: 'Tiêu Thụ Điện Theo Thiết Bị'
+                    display: false
+                },
+                legend: {
+                    display: false
                 }
             },
             scales: {
@@ -341,13 +344,19 @@ function initializePieChart() {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 title: {
-                    display: true,
-                    text: 'Phân Bố Tiêu Thụ Theo Nhóm'
+                    display: false
                 },
                 legend: {
-                    position: 'bottom'
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 12,
+                        font: {
+                            size: 10
+                        }
+                    }
                 }
             }
         }
@@ -361,21 +370,19 @@ function initializeLineChart() {
         type: 'line',
         data: {
             labels: ['00h', '02h', '04h', '06h', '08h', '10h', '12h', '14h', '16h', '18h', '20h', '22h', '24h'],
-            datasets: [{
-                label: 'Đường phụ tải (kW)',
-                data: [],
-                borderColor: 'rgba(75, 192, 192, 1)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                tension: 0.4,
-                fill: true
-            }]
+            datasets: []
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 title: {
                     display: true,
                     text: 'Đường Phụ Tải Cửa Hàng Winmart (24h)'
+                },
+                legend: {
+                    display: true,
+                    position: 'top'
                 }
             },
             scales: {
@@ -409,18 +416,18 @@ function updateChartTitles() {
     
     switch(viewMode) {
         case 'device':
-            document.getElementById('barChartTitle').textContent = 'Biểu Đồ Cột - Theo Thiết Bị';
-            document.getElementById('pieChartTitle').textContent = 'Biểu Đồ Phân Bố - Theo Thiết Bị';
+            document.getElementById('barChartTitle').textContent = 'Tiêu Thụ Điện';
+            document.getElementById('pieChartTitle').textContent = 'Phân Bố Điện Tiêu Thụ';
             document.getElementById('lineChartTitle').textContent = 'Đường Phụ Tải - Theo Thiết Bị';
             break;
         case 'category':
-            document.getElementById('barChartTitle').textContent = 'Biểu Đồ Cột - Theo Nhóm';
-            document.getElementById('pieChartTitle').textContent = 'Biểu Đồ Phân Bố - Theo Nhóm';
+            document.getElementById('barChartTitle').textContent = 'Tiêu Thụ Điện';
+            document.getElementById('pieChartTitle').textContent = 'Phân Bố Điện Tiêu Thụ';
             document.getElementById('lineChartTitle').textContent = 'Đường Phụ Tải - Theo Nhóm';
             break;
         case 'total':
-            document.getElementById('barChartTitle').textContent = 'Biểu Đồ Cột - Tổng Cửa Hàng';
-            document.getElementById('pieChartTitle').textContent = 'Biểu Đồ Phân Bố - Tổng Cửa Hàng';
+            document.getElementById('barChartTitle').textContent = 'Tiêu Thụ Điện';
+            document.getElementById('pieChartTitle').textContent = 'Phân Bố Điện Tiêu Thụ';
             document.getElementById('lineChartTitle').textContent = 'Đường Phụ Tải - Tổng Cửa Hàng';
             break;
     }
@@ -514,20 +521,77 @@ function updateLineChart() {
     if (!charts.line) return;
     
     const viewMode = document.getElementById('viewMode').value;
-    let loadCurve = [];
+    
+    // Clear existing datasets
+    charts.line.data.datasets = [];
     
     if (viewMode === 'device') {
-        // Show load curve for selected device (use first device or total if multiple)
-        loadCurve = calculateDailyLoadCurve();
+        // Show individual device load curves
+        const colors = [
+            'rgba(255, 99, 132, 1)',
+            'rgba(54, 162, 235, 1)', 
+            'rgba(255, 205, 86, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)',
+            'rgba(255, 159, 64, 1)',
+            'rgba(199, 199, 199, 1)',
+            'rgba(83, 102, 147, 1)'
+        ];
+        
+        devices.forEach((device, index) => {
+            const deviceLoadCurve = calculateDeviceLoadCurve(device);
+            const color = colors[index % colors.length];
+            
+            charts.line.data.datasets.push({
+                label: device.name,
+                data: deviceLoadCurve,
+                borderColor: color,
+                backgroundColor: color.replace('1)', '0.2)'),
+                tension: 0.4,
+                fill: false
+            });
+        });
+        
     } else if (viewMode === 'category') {
-        // Show load curve by category groups
-        loadCurve = calculateCategoryLoadCurve();
+        // Show category load curves
+        const categoryColors = {
+            'Máy lạnh': 'rgba(255, 99, 132, 1)',
+            'Tủ mát': 'rgba(54, 162, 235, 1)',
+            'Tủ lạnh': 'rgba(75, 192, 192, 1)',
+            'Đèn LED': 'rgba(255, 205, 86, 1)',
+            'Thiết bị khác': 'rgba(153, 102, 255, 1)'
+        };
+        
+        const categories = [...new Set(devices.map(device => device.category))];
+        
+        categories.forEach(category => {
+            const categoryLoadCurve = calculateCategorySpecificLoadCurve(category);
+            const color = categoryColors[category] || 'rgba(199, 199, 199, 1)';
+            
+            charts.line.data.datasets.push({
+                label: category,
+                data: categoryLoadCurve,
+                borderColor: color,
+                backgroundColor: color.replace('1)', '0.2)'),
+                tension: 0.4,
+                fill: false
+            });
+        });
+        
     } else { // total
         // Show total store load curve
-        loadCurve = calculateDailyLoadCurve();
+        const totalLoadCurve = calculateDailyLoadCurve();
+        
+        charts.line.data.datasets.push({
+            label: 'Tổng cửa hàng',
+            data: totalLoadCurve,
+            borderColor: 'rgba(75, 192, 192, 1)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.4,
+            fill: true
+        });
     }
     
-    charts.line.data.datasets[0].data = loadCurve;
     charts.line.update();
 }
 
@@ -592,6 +656,56 @@ function calculateCategoryLoadCurve() {
         });
         
         loadData.push(Math.round(totalLoad * 100) / 100);
+    });
+    
+    return loadData;
+}
+
+function calculateDeviceLoadCurve(device) {
+    const hours = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24];
+    const loadData = [];
+    
+    hours.forEach(hour => {
+        const powerKW = device.power / 1000;
+        
+        // 24/7 devices (refrigeration)
+        if (device.category === 'Tủ lạnh' || device.category === 'Tủ mát') {
+            loadData.push(Math.round(powerKW * 100) / 100);
+        }
+        // Store operation hours (6h-22h) for AC and lighting
+        else if (hour >= 6 && hour <= 22) {
+            loadData.push(Math.round(powerKW * 100) / 100);
+        } else {
+            loadData.push(0);
+        }
+    });
+    
+    return loadData;
+}
+
+function calculateCategorySpecificLoadCurve(category) {
+    const hours = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24];
+    const loadData = [];
+    
+    hours.forEach(hour => {
+        let categoryLoad = 0;
+        
+        devices.forEach(device => {
+            if (device.category === category) {
+                const powerKW = device.power / 1000;
+                
+                // 24/7 devices (refrigeration)
+                if (device.category === 'Tủ lạnh' || device.category === 'Tủ mát') {
+                    categoryLoad += powerKW;
+                }
+                // Store operation hours (6h-22h) for AC and lighting
+                else if (hour >= 6 && hour <= 22) {
+                    categoryLoad += powerKW;
+                }
+            }
+        });
+        
+        loadData.push(Math.round(categoryLoad * 100) / 100);
     });
     
     return loadData;
