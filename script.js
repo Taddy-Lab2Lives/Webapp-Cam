@@ -20,8 +20,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set default view mode to "category"
     document.getElementById('viewMode').value = 'category';
     
-    updateDisplay();
+    // Initialize charts first, then update display
     initializeCharts();
+    updateDisplay();
 });
 
 // Initialize default devices for Winmart store
@@ -397,9 +398,32 @@ function initializeLineChart() {
 }
 
 function updateCharts() {
+    updateChartTitles();
     updateBarChart();
     updatePieChart();
     updateLineChart();
+}
+
+function updateChartTitles() {
+    const viewMode = document.getElementById('viewMode').value;
+    
+    switch(viewMode) {
+        case 'device':
+            document.getElementById('barChartTitle').textContent = 'Biểu Đồ Cột - Theo Thiết Bị';
+            document.getElementById('pieChartTitle').textContent = 'Biểu Đồ Phân Bố - Theo Thiết Bị';
+            document.getElementById('lineChartTitle').textContent = 'Đường Phụ Tải - Theo Thiết Bị';
+            break;
+        case 'category':
+            document.getElementById('barChartTitle').textContent = 'Biểu Đồ Cột - Theo Nhóm';
+            document.getElementById('pieChartTitle').textContent = 'Biểu Đồ Phân Bố - Theo Nhóm';
+            document.getElementById('lineChartTitle').textContent = 'Đường Phụ Tải - Theo Nhóm';
+            break;
+        case 'total':
+            document.getElementById('barChartTitle').textContent = 'Biểu Đồ Cột - Tổng Cửa Hàng';
+            document.getElementById('pieChartTitle').textContent = 'Biểu Đồ Phân Bố - Tổng Cửa Hàng';
+            document.getElementById('lineChartTitle').textContent = 'Đường Phụ Tải - Tổng Cửa Hàng';
+            break;
+    }
 }
 
 function updateBarChart() {
@@ -465,9 +489,21 @@ function updateBarChart() {
 function updatePieChart() {
     if (!charts.pie) return;
     
-    const categoryTotals = calculateCategoryTotals();
-    const labels = Object.keys(categoryTotals);
-    const data = Object.values(categoryTotals);
+    const viewMode = document.getElementById('viewMode').value;
+    let labels = [];
+    let data = [];
+    
+    if (viewMode === 'device') {
+        labels = devices.map(device => device.name);
+        data = devices.map(device => device.monthlyConsumption);
+    } else if (viewMode === 'category') {
+        const categoryTotals = calculateCategoryTotals();
+        labels = Object.keys(categoryTotals);
+        data = Object.values(categoryTotals);
+    } else { // total
+        labels = ['Tổng tiêu thụ cửa hàng'];
+        data = [calculateTotals().monthly];
+    }
     
     charts.pie.data.labels = labels;
     charts.pie.data.datasets[0].data = data;
@@ -477,8 +513,19 @@ function updatePieChart() {
 function updateLineChart() {
     if (!charts.line) return;
     
-    // Calculate 24h load curve for Winmart store
-    const loadCurve = calculateDailyLoadCurve();
+    const viewMode = document.getElementById('viewMode').value;
+    let loadCurve = [];
+    
+    if (viewMode === 'device') {
+        // Show load curve for selected device (use first device or total if multiple)
+        loadCurve = calculateDailyLoadCurve();
+    } else if (viewMode === 'category') {
+        // Show load curve by category groups
+        loadCurve = calculateCategoryLoadCurve();
+    } else { // total
+        // Show total store load curve
+        loadCurve = calculateDailyLoadCurve();
+    }
     
     charts.line.data.datasets[0].data = loadCurve;
     charts.line.update();
@@ -506,6 +553,45 @@ function calculateDailyLoadCurve() {
         });
         
         loadData.push(Math.round(totalLoad * 100) / 100); // Round to 2 decimal places
+    });
+    
+    return loadData;
+}
+
+function calculateCategoryLoadCurve() {
+    // Calculate load curve showing major categories
+    const hours = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24];
+    const loadData = [];
+    
+    hours.forEach(hour => {
+        let totalLoad = 0;
+        
+        // Group by major categories and calculate their contribution
+        const categoryGroups = {
+            'Máy lạnh': 0,
+            'Tủ mát': 0,
+            'Tủ lạnh': 0,
+            'Đèn LED': 0
+        };
+        
+        devices.forEach(device => {
+            const powerKW = device.power / 1000;
+            
+            // 24/7 devices (refrigeration)
+            if (device.category === 'Tủ lạnh' || device.category === 'Tủ mát') {
+                categoryGroups[device.category] += powerKW;
+                totalLoad += powerKW;
+            }
+            // Store operation hours (6h-22h) for AC and lighting
+            else if (hour >= 6 && hour <= 22) {
+                if (categoryGroups[device.category] !== undefined) {
+                    categoryGroups[device.category] += powerKW;
+                }
+                totalLoad += powerKW;
+            }
+        });
+        
+        loadData.push(Math.round(totalLoad * 100) / 100);
     });
     
     return loadData;
