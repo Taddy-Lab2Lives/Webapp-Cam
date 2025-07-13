@@ -1,0 +1,35 @@
+{
+  "name": "electricity-consumption-calculator",
+  "version": "1.0.0",
+  "description": "Ứng dụng web tính toán điện tiêu thụ với biểu đồ trực quan",
+  "main": "index.html",
+  "scripts": {
+    "start": "live-server --port=3000 --open=index.html",
+    "dev": "live-server --port=3000 --open=index.html --watch=**/*.{html,css,js}",
+    "build": "echo 'No build process needed for static HTML app'",
+    "test": "echo 'No tests specified'"
+  },
+  "keywords": [
+    "electricity",
+    "consumption",
+    "calculator",
+    "chart",
+    "energy",
+    "monitoring",
+    "vietnamese"
+  ],
+  "author": "Electricity Calculator Team",
+  "license": "MIT",
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  },
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/electricity-consumption-calculator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/electricity-consumption-calculator/issues"
+  },
+  "homepage": "https://your-username.github.io/electricity-consumption-calculator/"
+}
