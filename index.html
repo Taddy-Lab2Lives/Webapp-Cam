@@ -82,6 +82,37 @@
             height: 100%;
             pointer-events: none;
         }
+
+        .flying-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            animation: flyAcross 8s linear infinite;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        @keyframes flyAcross {
+            0% {
+                left: -20%;
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                left: 120%;
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -89,6 +120,7 @@
         <h1>Hello World!</h1>
         <button class="bubble-button" onclick="createBubble()">Create Bubble</button>
         <div class="bubble-container" id="bubbleContainer"></div>
+        <div class="flying-text">Thanks Kevin for the trick, it works great in my hello world application :)</div>
     </div>
 
     <script>
