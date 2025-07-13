@@ -12,9 +12,130 @@ let charts = {
 // Load data from localStorage on page load
 document.addEventListener('DOMContentLoaded', function() {
     loadDevicesFromStorage();
+    // Initialize with default devices if no data exists
+    if (devices.length === 0) {
+        initializeDefaultDevices();
+    }
     updateDisplay();
     initializeCharts();
 });
+
+// Initialize default devices for Winmart store
+function initializeDefaultDevices() {
+    const defaultDevices = [
+        // 3 Máy lạnh - hoạt động 16h (6h-22h)
+        {
+            id: 1,
+            name: 'Máy lạnh khu vực bán hàng 1',
+            category: 'Máy lạnh',
+            power: 3500,
+            hoursPerDay: 16,
+            daysPerWeek: 7
+        },
+        {
+            id: 2,
+            name: 'Máy lạnh khu vực bán hàng 2',
+            category: 'Máy lạnh',
+            power: 3500,
+            hoursPerDay: 16,
+            daysPerWeek: 7
+        },
+        {
+            id: 3,
+            name: 'Máy lạnh khu vực thanh toán',
+            category: 'Máy lạnh',
+            power: 2500,
+            hoursPerDay: 16,
+            daysPerWeek: 7
+        },
+        // 2 Tủ open showcase công suất cao - chạy 24/7
+        {
+            id: 4,
+            name: 'Tủ mát trưng bày đồ uống',
+            category: 'Tủ mát',
+            power: 1200,
+            hoursPerDay: 24,
+            daysPerWeek: 7
+        },
+        {
+            id: 5,
+            name: 'Tủ mát trưng bày thực phẩm tươi sống',
+            category: 'Tủ mát',
+            power: 1500,
+            hoursPerDay: 24,
+            daysPerWeek: 7
+        },
+        // 3 Tủ lạnh công suất nhỏ - chạy 24/7
+        {
+            id: 6,
+            name: 'Tủ lạnh kem',
+            category: 'Tủ lạnh',
+            power: 300,
+            hoursPerDay: 24,
+            daysPerWeek: 7
+        },
+        {
+            id: 7,
+            name: 'Tủ lạnh thực phẩm đông lạnh',
+            category: 'Tủ lạnh',
+            power: 400,
+            hoursPerDay: 24,
+            daysPerWeek: 7
+        },
+        {
+            id: 8,
+            name: 'Tủ lạnh đồ uống',
+            category: 'Tủ lạnh',
+            power: 250,
+            hoursPerDay: 24,
+            daysPerWeek: 7
+        },
+        // Đèn biển hiệu - hoạt động 16h (6h-22h)
+        {
+            id: 9,
+            name: 'Đèn biển hiệu Winmart',
+            category: 'Đèn LED',
+            power: 150,
+            hoursPerDay: 16,
+            daysPerWeek: 7
+        },
+        // Đèn indoor - hoạt động 16h (6h-22h)
+        {
+            id: 10,
+            name: 'Hệ thống đèn LED khu vực bán hàng',
+            category: 'Đèn LED',
+            power: 800,
+            hoursPerDay: 16,
+            daysPerWeek: 7
+        },
+        {
+            id: 11,
+            name: 'Đèn LED khu vực thanh toán',
+            category: 'Đèn LED',
+            power: 200,
+            hoursPerDay: 16,
+            daysPerWeek: 7
+        },
+        {
+            id: 12,
+            name: 'Đèn LED kho hàng',
+            category: 'Đèn LED',
+            power: 300,
+            hoursPerDay: 16,
+            daysPerWeek: 7
+        }
+    ];
+    
+    // Calculate consumption for each device
+    defaultDevices.forEach(device => {
+        device.dailyConsumption = calculateDailyConsumption(device.power, device.hoursPerDay);
+        device.weeklyConsumption = calculateWeeklyConsumption(device.dailyConsumption, device.daysPerWeek);
+        device.monthlyConsumption = calculateMonthlyConsumption(device.weeklyConsumption);
+    });
+    
+    devices = defaultDevices;
+    saveDevicesToStorage();
+}
 
 // Device management functions
 function saveDevice() {
@@ -234,13 +355,14 @@ function initializeLineChart() {
     charts.line = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4'],
+            labels: ['00h', '02h', '04h', '06h', '08h', '10h', '12h', '14h', '16h', '18h', '20h', '22h', '24h'],
             datasets: [{
-                label: 'Tiêu thụ hàng tuần (kWh)',
+                label: 'Đường phụ tải (kW)',
                 data: [],
                 borderColor: 'rgba(75, 192, 192, 1)',
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                tension: 0.4
+                tension: 0.4,
+                fill: true
             }]
         },
         options: {
@@ -248,15 +370,21 @@ function initializeLineChart() {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Xu Hướng Tiêu Thụ Điện'
+                    text: 'Đường Phụ Tải Cửa Hàng Winmart (24h)'
                 }
             },
             scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Giờ trong ngày'
+                    }
+                },
                 y: {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'kWh/tuần'
+                        text: 'Công suất (kW)'
                     }
                 }
             }
@@ -345,17 +473,38 @@ function updatePieChart() {
 function updateLineChart() {
     if (!charts.line) return;
     
-    const weeklyTotal = calculateTotals().weekly;
-    // Simulate trend data for 4 weeks
-    const trendData = [
-        weeklyTotal * 0.9,
-        weeklyTotal * 1.1,
-        weeklyTotal * 0.95,
-        weeklyTotal
-    ];
+    // Calculate 24h load curve for Winmart store
+    const loadCurve = calculateDailyLoadCurve();
     
-    charts.line.data.datasets[0].data = trendData;
+    charts.line.data.datasets[0].data = loadCurve;
     charts.line.update();
+}
+
+function calculateDailyLoadCurve() {
+    // Define hourly load based on store operations
+    const hours = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24];
+    const loadData = [];
+    
+    hours.forEach(hour => {
+        let totalLoad = 0;
+        
+        devices.forEach(device => {
+            const powerKW = device.power / 1000; // Convert to kW
+            
+            // 24/7 devices (refrigeration)
+            if (device.category === 'Tủ lạnh' || device.category === 'Tủ mát') {
+                totalLoad += powerKW;
+            }
+            // Store operation hours (6h-22h) for AC and lighting
+            else if (hour >= 6 && hour <= 22) {
+                totalLoad += powerKW;
+            }
+        });
+        
+        loadData.push(Math.round(totalLoad * 100) / 100); // Round to 2 decimal places
+    });
+    
+    return loadData;
 }
 
 function calculateCategoryTotals() {
@@ -437,6 +586,17 @@ function exportCSV() {
 document.getElementById('deviceModal').addEventListener('hidden.bs.modal', function() {
     clearForm();
 });
+
+// Reset to default devices
+function resetToDefault() {
+    if (confirm('Bạn có chắc chắn muốn reset về dữ liệu mặc định của cửa hàng Winmart?')) {
+        devices = [];
+        localStorage.removeItem('electricityDevices');
+        initializeDefaultDevices();
+        updateDisplay();
+        alert('Đã reset về dữ liệu mặc định thành công!');
+    }
+}
 
 // Form validation
 document.getElementById('deviceForm').addEventListener('submit', function(e) {
