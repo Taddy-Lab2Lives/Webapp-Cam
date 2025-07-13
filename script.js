@@ -806,6 +806,51 @@ function resetToDefault() {
     }
 }
 
+// Toggle device table visibility
+function toggleDeviceTable() {
+    const container = document.getElementById('deviceTableContainer');
+    const btn = document.getElementById('toggleTableBtn');
+    const icon = document.getElementById('toggleIcon');
+    
+    // Check current state
+    const isVisible = container.style.display !== 'none';
+    
+    if (isVisible) {
+        // Hide table with animation
+        container.style.transition = 'all 0.3s ease-out';
+        container.style.transform = 'scaleY(0)';
+        container.style.opacity = '0';
+        container.style.height = '0px';
+        container.style.paddingTop = '0';
+        container.style.paddingBottom = '0';
+        
+        setTimeout(() => {
+            container.style.display = 'none';
+        }, 300);
+        
+        btn.innerHTML = '<i class="bi bi-chevron-down" id="toggleIcon"></i> Mở rộng';
+        btn.classList.remove('btn-outline-secondary');
+        btn.classList.add('btn-outline-primary');
+    } else {
+        // Show table with animation
+        container.style.display = 'block';
+        container.style.height = 'auto';
+        container.style.paddingTop = '';
+        container.style.paddingBottom = '';
+        
+        // Force reflow
+        container.offsetHeight;
+        
+        container.style.transition = 'all 0.3s ease-in';
+        container.style.transform = 'scaleY(1)';
+        container.style.opacity = '1';
+        
+        btn.innerHTML = '<i class="bi bi-chevron-up" id="toggleIcon"></i> Thu gọn';
+        btn.classList.remove('btn-outline-primary');
+        btn.classList.add('btn-outline-secondary');
+    }
+}
+
 // Form validation
 document.getElementById('deviceForm').addEventListener('submit', function(e) {
     e.preventDefault();

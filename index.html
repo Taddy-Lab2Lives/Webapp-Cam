@@ -87,10 +87,13 @@
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="card">
-                        <div class="card-header">
+                        <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">Danh Sách Thiết Bị</h5>
+                            <button class="btn btn-sm btn-outline-secondary" type="button" onclick="toggleDeviceTable()" id="toggleTableBtn">
+                                <i class="bi bi-chevron-up" id="toggleIcon"></i> Thu gọn
+                            </button>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body" id="deviceTableContainer">
                             <div class="table-responsive">
                                 <table class="table table-striped table-hover">
                                     <thead class="table-dark">

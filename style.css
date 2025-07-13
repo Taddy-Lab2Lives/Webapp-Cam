@@ -302,6 +302,32 @@ header h1 {
     z-index: 10;
 }
 
+/* Device Table Toggle */
+#deviceTableContainer {
+    transition: all 0.3s ease-in-out;
+    overflow: hidden;
+}
+
+#toggleTableBtn {
+    transition: all 0.2s ease;
+}
+
+#toggleTableBtn:hover {
+    transform: translateY(-1px);
+}
+
+#toggleIcon {
+    transition: transform 0.3s ease;
+}
+
+/* Collapsible Animation */
+.collapsing {
+    position: relative;
+    height: 0;
+    overflow: hidden;
+    transition: height 0.35s ease;
+}
+
 /* Print Styles */
 @media print {
     .btn, .modal, .chart-container {
