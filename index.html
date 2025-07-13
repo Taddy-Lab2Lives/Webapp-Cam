@@ -49,6 +49,22 @@
             background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(255,255,255,0.2));
             animation: float 4s ease-in-out infinite;
             pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bubble-text {
+            position: absolute;
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ffffff;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+            text-align: center;
+            line-height: 1;
         }
 
         @keyframes float {
@@ -83,36 +99,6 @@
             pointer-events: none;
         }
 
-        .flying-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 24px;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            animation: flyAcross 8s linear infinite;
-            pointer-events: none;
-            white-space: nowrap;
-        }
-
-        @keyframes flyAcross {
-            0% {
-                left: -20%;
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            90% {
-                opacity: 1;
-            }
-            100% {
-                left: 120%;
-                opacity: 0;
-            }
-        }
     </style>
 </head>
 <body>
@@ -120,7 +106,6 @@
         <h1>Hello World!</h1>
         <button class="bubble-button" onclick="createBubble()">Create Bubble</button>
         <div class="bubble-container" id="bubbleContainer"></div>
-        <div class="flying-text">Thanks Kevin for the trick, it works great in my hello world application :)</div>
     </div>
 
     <script>
@@ -146,6 +131,12 @@
                     bubble.style.background = `radial-gradient(circle at 30% 30%, 
                         hsla(${hue}, ${saturation}%, ${lightness}%, 0.8), 
                         hsla(${hue}, ${saturation}%, ${lightness - 20}%, 0.3))`;
+                    
+                    const text = document.createElement('div');
+                    text.className = 'bubble-text';
+                    text.textContent = 'Hello World';
+                    text.style.fontSize = (size * 0.12) + 'px';
+                    bubble.appendChild(text);
                     
                     container.appendChild(bubble);
                     
