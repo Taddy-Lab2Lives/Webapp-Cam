@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Benkon Energy API Tester</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             margin: 0;
@@ -230,6 +231,108 @@
             margin-top: 10px;
         }
         
+        .example-item {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+        
+        .example-item:hover {
+            border-color: #3498db;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.1);
+        }
+        
+        .example-item h4 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        
+        .example-item p {
+            color: #666;
+            margin-bottom: 0;
+            line-height: 1.5;
+        }
+        
+        .sample-response {
+            background: #2c3e50;
+            color: #ecf0f1;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            overflow-x: auto;
+        }
+        
+        .sample-response strong {
+            color: #3498db;
+            display: block;
+            margin-bottom: 10px;
+        }
+        
+        .sample-response pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+        
+        .sample-response code {
+            color: #ecf0f1;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+            margin-top: 15px;
+        }
+        
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .chart-controls label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .chart-controls select {
+            padding: 8px 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .chart-btn {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        
+        .chart-btn:hover {
+            transform: translateY(-1px);
+        }
+        
         @media (max-width: 768px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -268,6 +371,7 @@
                     <div class="tab active" onclick="switchTab('locations')">Locations</div>
                     <div class="tab" onclick="switchTab('energy')">Energy Data</div>
                     <div class="tab" onclick="switchTab('equipment')">Equipment</div>
+                    <div class="tab" onclick="switchTab('examples')">Examples</div>
                 </div>
                 
                 <!-- Locations Tab -->
@@ -276,7 +380,7 @@
                         <h3><span class="method-badge">GET</span>List All Locations</h3>
                         <div class="form-group">
                             <label for="org-id-locations">Organization ID:</label>
-                            <input type="text" id="org-id-locations" value="123" placeholder="Enter organization ID">
+                            <input type="text" id="org-id-locations" value="7411698114757914624" placeholder="Enter organization ID">
                         </div>
                         <button class="btn" onclick="listLocations()">Get Locations</button>
                     </div>
@@ -285,11 +389,11 @@
                         <h3><span class="method-badge">GET</span>Get Specific Location</h3>
                         <div class="form-group">
                             <label for="org-id-single">Organization ID:</label>
-                            <input type="text" id="org-id-single" value="123" placeholder="Enter organization ID">
+                            <input type="text" id="org-id-single" value="7411698114757914624" placeholder="Enter organization ID">
                         </div>
                         <div class="form-group">
                             <label for="loc-id-single">Location ID:</label>
-                            <input type="text" id="loc-id-single" value="456" placeholder="Enter location ID">
+                            <input type="text" id="loc-id-single" value="7407763056947015680" placeholder="Enter location ID">
                         </div>
                         <button class="btn" onclick="getLocation()">Get Location</button>
                     </div>
@@ -306,11 +410,11 @@
                         <h3><span class="method-badge">GET</span>Location Hourly Energy</h3>
                         <div class="form-group">
                             <label for="org-id-location-energy">Organization ID:</label>
-                            <input type="text" id="org-id-location-energy" value="123" placeholder="Enter organization ID">
+                            <input type="text" id="org-id-location-energy" value="7411698114757914624" placeholder="Enter organization ID">
                         </div>
                         <div class="form-group">
                             <label for="loc-id-energy">Location ID:</label>
-                            <input type="text" id="loc-id-energy" value="456" placeholder="Enter location ID">
+                            <input type="text" id="loc-id-energy" value="7407763056947015680" placeholder="Enter location ID">
                         </div>
                         <div class="form-group">
                             <label for="start-date-location">Start Date:</label>
@@ -330,11 +434,11 @@
                         <h3><span class="method-badge">GET</span>List Equipment</h3>
                         <div class="form-group">
                             <label for="org-id-equips">Organization ID:</label>
-                            <input type="text" id="org-id-equips" value="123" placeholder="Enter organization ID">
+                            <input type="text" id="org-id-equips" value="7411698114757914624" placeholder="Enter organization ID">
                         </div>
                         <div class="form-group">
                             <label for="loc-id-equips">Location ID:</label>
-                            <input type="text" id="loc-id-equips" value="456" placeholder="Enter location ID">
+                            <input type="text" id="loc-id-equips" value="7407763056947015680" placeholder="Enter location ID">
                         </div>
                         <button class="btn" onclick="listEquipment()">Get Equipment</button>
                     </div>
@@ -343,15 +447,15 @@
                         <h3><span class="method-badge">GET</span>Equipment Energy Data</h3>
                         <div class="form-group">
                             <label for="org-id-equip-energy">Organization ID:</label>
-                            <input type="text" id="org-id-equip-energy" value="123" placeholder="Enter organization ID">
+                            <input type="text" id="org-id-equip-energy" value="7411698114757914624" placeholder="Enter organization ID">
                         </div>
                         <div class="form-group">
                             <label for="loc-id-equip-energy">Location ID:</label>
-                            <input type="text" id="loc-id-equip-energy" value="456" placeholder="Enter location ID">
+                            <input type="text" id="loc-id-equip-energy" value="7407763056947015680" placeholder="Enter location ID">
                         </div>
                         <div class="form-group">
                             <label for="equip-id-energy">Equipment ID:</label>
-                            <input type="text" id="equip-id-energy" value="AC001" placeholder="Enter equipment ID">
+                            <input type="text" id="equip-id-energy" value="" placeholder="Get equipment ID from equipment list">
                         </div>
                         <div class="form-group">
                             <label for="start-date-equip">Start Date:</label>
@@ -368,11 +472,11 @@
                         <h3><span class="method-badge">GET</span>All Equipment Energy</h3>
                         <div class="form-group">
                             <label for="org-id-all-equip">Organization ID:</label>
-                            <input type="text" id="org-id-all-equip" value="123" placeholder="Enter organization ID">
+                            <input type="text" id="org-id-all-equip" value="7411698114757914624" placeholder="Enter organization ID">
                         </div>
                         <div class="form-group">
                             <label for="loc-id-all-equip">Location ID:</label>
-                            <input type="text" id="loc-id-all-equip" value="456" placeholder="Enter location ID">
+                            <input type="text" id="loc-id-all-equip" value="7407763056947015680" placeholder="Enter location ID">
                         </div>
                         <div class="form-group">
                             <label for="start-date-all">Start Date:</label>
@@ -383,6 +487,60 @@
                             <input type="date" id="end-date-all" value="2025-01-17">
                         </div>
                         <button class="btn" onclick="getAllEquipmentEnergy()">Get All Equipment Energy</button>
+                    </div>
+                </div>
+                
+                <!-- Examples Tab -->
+                <div id="examples-tab" class="tab-content">
+                    <div class="chart-container">
+                        <h3>📊 Daily Energy Chart - Last 7 Days</h3>
+                        <div class="chart-controls">
+                            <label for="chart-org-id">Org ID:</label>
+                            <input type="text" id="chart-org-id" value="7411698114757914624" style="padding: 8px; border: 2px solid #e1e8ed; border-radius: 5px; width: 200px;">
+                            
+                            <label for="chart-loc-id">Location ID:</label>
+                            <input type="text" id="chart-loc-id" value="7407763056947015680" style="padding: 8px; border: 2px solid #e1e8ed; border-radius: 5px; width: 200px;">
+                            
+                            <label for="chart-metric">Metric:</label>
+                            <select id="chart-metric">
+                                <option value="ac_energy_wh">AC Energy (Wh)</option>
+                                <option value="total_energy_wh">Total Energy (Wh)</option>
+                                <option value="ac_energy_wh_per_m2">AC Energy per m² (Wh/m²)</option>
+                                <option value="total_energy_wh_per_m2">Total Energy per m² (Wh/m²)</option>
+                            </select>
+                            
+                            <button class="chart-btn" onclick="plotDailyEnergy()">📈 Plot Chart</button>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="energyChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3>⚡ Hourly Power Consumption (00h - 24h)</h3>
+                        <div class="chart-controls">
+                            <label for="hourly-org-id">Org ID:</label>
+                            <input type="text" id="hourly-org-id" value="7411698114757914624" style="padding: 8px; border: 2px solid #e1e8ed; border-radius: 5px; width: 200px;">
+                            
+                            <label for="hourly-loc-id">Location ID:</label>
+                            <input type="text" id="hourly-loc-id" value="7407763056947015680" style="padding: 8px; border: 2px solid #e1e8ed; border-radius: 5px; width: 200px;">
+                            
+                            <label for="hourly-date">Date:</label>
+                            <input type="date" id="hourly-date" style="padding: 8px; border: 2px solid #e1e8ed; border-radius: 5px;">
+                            
+                            <label for="hourly-metric">Metric:</label>
+                            <select id="hourly-metric">
+                                <option value="ac_energy_wh">AC Energy (Wh)</option>
+                                <option value="total_energy_wh">Total Energy (Wh)</option>
+                                <option value="ac_energy_wh_per_m2">AC Energy per m² (Wh/m²)</option>
+                                <option value="total_energy_wh_per_m2">Total Energy per m² (Wh/m²)</option>
+                            </select>
+                            
+                            <button class="chart-btn" onclick="plotHourlyPower()">⚡ Plot Hourly Chart</button>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="hourlyChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -527,6 +685,330 @@ ${error.message || error}`;
             makeRequest(`/orgs/${orgId}/locations/${locId}/equipsData/hourlyEnergy?startDate=${startDate}&endDate=${endDate}`);
         }
         
+        let energyChart = null;
+        let hourlyChart = null;
+        
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+        
+        function calculateDailyTotal(hourlyData) {
+            return hourlyData.reduce((sum, hour) => sum + hour, 0);
+        }
+        
+        async function plotDailyEnergy() {
+            const orgId = document.getElementById('chart-org-id').value;
+            const locId = document.getElementById('chart-loc-id').value;
+            const metric = document.getElementById('chart-metric').value;
+            
+            if (!orgId || !locId) {
+                alert('Please enter both Organization ID and Location ID');
+                return;
+            }
+            
+            // Calculate date range for last 7 days
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(endDate.getDate() - 6); // 7 days including today
+            
+            const startDateStr = formatDate(startDate);
+            const endDateStr = formatDate(endDate);
+            
+            try {
+                const url = `${BASE_URL}/orgs/${orgId}/locations/${locId}/data/hourlyEnergy?startDate=${startDateStr}&endDate=${endDateStr}`;
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (!data[metric]) {
+                    throw new Error(`Metric "${metric}" not found in response`);
+                }
+                
+                // Process data for chart
+                const dates = [];
+                const dailyTotals = [];
+                
+                // Generate last 7 days
+                for (let i = 6; i >= 0; i--) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    const dateStr = formatDate(date);
+                    dates.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                    
+                    if (data[metric][dateStr]) {
+                        const dailyTotal = calculateDailyTotal(data[metric][dateStr]);
+                        dailyTotals.push(dailyTotal);
+                    } else {
+                        dailyTotals.push(0); // No data for this day
+                    }
+                }
+                
+                // Destroy existing chart if it exists
+                if (energyChart) {
+                    energyChart.destroy();
+                }
+                
+                // Create new chart
+                const ctx = document.getElementById('energyChart').getContext('2d');
+                energyChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: metric.replace(/_/g, ' ').toUpperCase(),
+                            data: dailyTotals,
+                            backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                            borderColor: '#3498db',
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            hoverBackgroundColor: 'rgba(52, 152, 219, 0.9)',
+                            hoverBorderColor: '#2980b9'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `Daily ${metric.replace(/_/g, ' ').toUpperCase()} - Last 7 Days`,
+                                font: {
+                                    size: 16,
+                                    weight: 'bold'
+                                }
+                            },
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: metric.includes('per_m2') ? 'Wh/m²' : 'Wh'
+                                },
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Date'
+                                },
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                }
+                            }
+                        },
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeInOutQuart'
+                        }
+                    }
+                });
+                
+                // Update results panel
+                displayResult({
+                    message: 'Chart plotted successfully',
+                    dateRange: `${startDateStr} to ${endDateStr}`,
+                    metric: metric,
+                    dailyTotals: dailyTotals,
+                    dates: dates
+                }, url, 200);
+                
+            } catch (error) {
+                displayError(error, `${BASE_URL}/orgs/${orgId}/locations/${locId}/data/hourlyEnergy`);
+            }
+        }
+        
+        async function plotHourlyPower() {
+            const orgId = document.getElementById('hourly-org-id').value;
+            const locId = document.getElementById('hourly-loc-id').value;
+            const selectedDate = document.getElementById('hourly-date').value;
+            const metric = document.getElementById('hourly-metric').value;
+            
+            if (!orgId || !locId || !selectedDate) {
+                alert('Please enter Organization ID, Location ID, and select a date');
+                return;
+            }
+            
+            try {
+                const url = `${BASE_URL}/orgs/${orgId}/locations/${locId}/data/hourlyEnergy?startDate=${selectedDate}&endDate=${selectedDate}`;
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (!data[metric] || !data[metric][selectedDate]) {
+                    throw new Error(`No data found for metric "${metric}" on date ${selectedDate}`);
+                }
+                
+                const hourlyData = data[metric][selectedDate];
+                
+                // Generate hour labels (00h to 23h)
+                const hourLabels = [];
+                for (let i = 0; i < 24; i++) {
+                    hourLabels.push(`${String(i).padStart(2, '0')}h`);
+                }
+                
+                // Destroy existing chart if it exists
+                if (hourlyChart) {
+                    hourlyChart.destroy();
+                }
+                
+                // Create new chart
+                const ctx = document.getElementById('hourlyChart').getContext('2d');
+                hourlyChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: hourLabels,
+                        datasets: [{
+                            label: `${metric.replace(/_/g, ' ').toUpperCase()} on ${selectedDate}`,
+                            data: hourlyData,
+                            backgroundColor: 'rgba(52, 152, 219, 0.6)',
+                            borderColor: '#3498db',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            hoverBackgroundColor: 'rgba(52, 152, 219, 0.8)',
+                            hoverBorderColor: '#2980b9'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `Hourly ${metric.replace(/_/g, ' ').toUpperCase()} - ${selectedDate}`,
+                                font: {
+                                    size: 16,
+                                    weight: 'bold'
+                                }
+                            },
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: metric.includes('per_m2') ? 'Power (Wh/m²)' : 'Power (Wh)'
+                                },
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Hour of Day'
+                                },
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                }
+                            }
+                        },
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeInOutQuart'
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        }
+                    }
+                });
+                
+                // Calculate statistics
+                const totalDaily = hourlyData.reduce((sum, hour) => sum + hour, 0);
+                const avgHourly = totalDaily / 24;
+                const maxHour = Math.max(...hourlyData);
+                const maxHourIndex = hourlyData.indexOf(maxHour);
+                const minHour = Math.min(...hourlyData);
+                const minHourIndex = hourlyData.indexOf(minHour);
+                
+                // Update results panel with statistics
+                displayResult({
+                    message: 'Hourly chart plotted successfully',
+                    date: selectedDate,
+                    metric: metric,
+                    statistics: {
+                        totalDaily: totalDaily.toFixed(2),
+                        averageHourly: avgHourly.toFixed(2),
+                        peakHour: `${String(maxHourIndex).padStart(2, '0')}h (${maxHour} ${metric.includes('per_m2') ? 'Wh/m²' : 'Wh'})`,
+                        lowestHour: `${String(minHourIndex).padStart(2, '0')}h (${minHour} ${metric.includes('per_m2') ? 'Wh/m²' : 'Wh'})`
+                    },
+                    hourlyData: hourlyData
+                }, url, 200);
+                
+            } catch (error) {
+                displayError(error, `${BASE_URL}/orgs/${orgId}/locations/${locId}/data/hourlyEnergy`);
+            }
+        }
+        
+        function runExample(exampleType) {
+            switch(exampleType) {
+                case 'locations':
+                    switchTab('locations');
+                    document.getElementById('org-id-locations').value = '7411698114757914624';
+                    setTimeout(() => listLocations(), 300);
+                    break;
+                    
+                case 'equipment':
+                    switchTab('equipment');
+                    document.getElementById('org-id-equips').value = '7411698114757914624';
+                    document.getElementById('loc-id-equips').value = '7407763056947015680';
+                    setTimeout(() => listEquipment(), 300);
+                    break;
+                    
+                case 'locationEnergy':
+                    switchTab('energy');
+                    document.getElementById('org-id-location-energy').value = '7411698114757914624';
+                    document.getElementById('loc-id-energy').value = '7407763056947015680';
+                    document.getElementById('start-date-location').value = '2025-01-15';
+                    document.getElementById('end-date-location').value = '2025-01-17';
+                    setTimeout(() => getLocationEnergy(), 300);
+                    break;
+                    
+                case 'equipmentEnergy':
+                    alert('First run "Get Equipment List" to find valid equipment IDs, then come back to this example');
+                    switchTab('equipment');
+                    document.getElementById('org-id-equips').value = '7411698114757914624';
+                    document.getElementById('loc-id-equips').value = '7407763056947015680';
+                    break;
+                    
+                case 'allEquipmentEnergy':
+                    switchTab('equipment');
+                    document.getElementById('org-id-all-equip').value = '7411698114757914624';
+                    document.getElementById('loc-id-all-equip').value = '7407763056947015680';
+                    document.getElementById('start-date-all').value = '2025-01-15';
+                    document.getElementById('end-date-all').value = '2025-01-17';
+                    setTimeout(() => getAllEquipmentEnergy(), 300);
+                    break;
+                    
+                case 'apiDocs':
+                    switchTab('locations');
+                    setTimeout(() => getApiDocs(), 300);
+                    break;
+                    
+                default:
+                    console.log('Unknown example type:', exampleType);
+            }
+        }
+        
         // Set default dates to today and 3 days ago
         window.onload = function() {
             const today = new Date();
@@ -540,6 +1022,8 @@ ${error.message || error}`;
             document.querySelectorAll('input[type="date"]').forEach(input => {
                 if (input.id.includes('start')) {
                     input.value = threeDaysAgoStr;
+                } else if (input.id === 'hourly-date') {
+                    input.value = todayStr;
                 } else {
                     input.value = todayStr;
                 }
