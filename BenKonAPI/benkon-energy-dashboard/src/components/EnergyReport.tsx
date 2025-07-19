@@ -612,7 +612,9 @@ const EnergyReport: React.FC = () => {
                       <div>
                         <span className="font-medium">Công suất lạnh trên diện tích:</span>
                         <span className="ml-2 font-mono bg-white px-2 py-1 rounded">
-                          {loadAnalysisData?.coolingLoadPerArea ? `${(loadAnalysisData.coolingLoadPerArea / 1000).toFixed(2)} kW / ${equipmentInfo?.serviceArea || '30 m²'} = ${loadAnalysisData.coolingLoadPerArea.toFixed(1)} W/m²` : 'Loading...'}
+                          {loadAnalysisData?.coolingLoadPerArea && equipmentInfo ? 
+                            `${equipmentInfo.coolingCapacity} / ${equipmentInfo.serviceArea} = ${loadAnalysisData.coolingLoadPerArea.toFixed(1)} W/m²` 
+                            : 'Loading...'}
                         </span>
                       </div>
                       <div>
