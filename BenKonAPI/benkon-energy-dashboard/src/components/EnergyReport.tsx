@@ -203,18 +203,12 @@ const EnergyReport: React.FC = () => {
     const coolingCapacity = totalBTU / 3412; // Convert BTU to kW (1 kW = 3412 BTU)
     const coolingLoadPerArea = (coolingCapacity * 1000) / area; // Convert kW to W
     
-    // Calculate actual equipment loads from API data
+    // Calculate actual equipment loads from API data - simplified to AC and Others
     const acLoad = acEquipment.reduce((sum, eq) => sum + (eq.rated_power_w || 0), 0);
-    const lightingEquipment = equipmentData.filter(eq => eq.type && (eq.type.toLowerCase().includes('light') || eq.type.toLowerCase().includes('led')));
-    const lightingLoad = lightingEquipment.reduce((sum, eq) => sum + (eq.rated_power_w || 0), 0);
-    const refrigerationEquipment = equipmentData.filter(eq => eq.type && (eq.type.toLowerCase().includes('refriger') || eq.type.toLowerCase().includes('freezer') || eq.type.toLowerCase().includes('cooler')));
-    const refrigerationLoad = refrigerationEquipment.reduce((sum, eq) => sum + (eq.rated_power_w || 0), 0);
-    const otherEquipment = equipmentData.filter(eq => !acEquipment.includes(eq) && !lightingEquipment.includes(eq) && !refrigerationEquipment.includes(eq));
-    const otherLoad = otherEquipment.reduce((sum, eq) => sum + (eq.rated_power_w || 0), 0);
+    const otherEquipment = equipmentData.filter(eq => !acEquipment.includes(eq));
+    const othersLoad = otherEquipment.reduce((sum, eq) => sum + (eq.rated_power_w || 0), 0);
     
-    const totalEquipmentLoad = acLoad + lightingLoad + refrigerationLoad + otherLoad;
-    const estimatedPeopleLoad = Math.round(area * 12); // 12W per m² for people
-    const estimatedBuildingLoad = Math.round(area * 18); // 18W per m² for building envelope
+    const totalEquipmentLoad = acLoad + othersLoad;
     
     const processedLoadAnalysis: LoadAnalysis = {
       coolingLoadPerArea,
@@ -222,19 +216,19 @@ const EnergyReport: React.FC = () => {
       benkonRecommendation: '160 W/m²',
       designStatus: coolingLoadPerArea >= 150 && coolingLoadPerArea <= 200 ? 'Đạt yêu cầu' : 'Cần điều chỉnh',
       heatLoadBredown: {
-        people: estimatedPeopleLoad,
-        lighting: lightingLoad,
-        equipment: refrigerationLoad + otherLoad,
-        building: estimatedBuildingLoad,
-        total: estimatedPeopleLoad + lightingLoad + refrigerationLoad + otherLoad + estimatedBuildingLoad
+        people: 0, // Not using estimated values, only API data
+        lighting: 0, // Not using estimated values, only API data
+        equipment: othersLoad, // All non-AC equipment from API
+        building: 0, // Not using estimated values, only API data
+        total: totalEquipmentLoad // Only actual equipment from API
       },
-      safetyFactor: coolingCapacity * 1000 / (estimatedPeopleLoad + lightingLoad + refrigerationLoad + otherLoad + estimatedBuildingLoad),
-      // Add detailed equipment breakdown
+      safetyFactor: totalEquipmentLoad > 0 ? (coolingCapacity * 1000) / totalEquipmentLoad : 0,
+      // Simplified equipment breakdown - AC and Others only
       equipmentBreakdown: {
         ac: acLoad,
-        lighting: lightingLoad,
-        refrigeration: refrigerationLoad,
-        other: otherLoad,
+        lighting: 0, // Included in Others
+        refrigeration: 0, // Included in Others
+        other: othersLoad,
         totalEquipment: totalEquipmentLoad
       }
     };
@@ -309,18 +303,18 @@ const EnergyReport: React.FC = () => {
       benkonRecommendation: '160 W/m²',
       designStatus: 'Đạt yêu cầu',
       heatLoadBredown: {
-        people: 360,
-        lighting: 500,
-        equipment: 800,
-        building: 600,
-        total: 2260
+        people: 0, // Only using API data
+        lighting: 0, // Only using API data
+        equipment: 4200, // Others equipment
+        building: 0, // Only using API data
+        total: 13700 // Total from API
       },
-      safetyFactor: 2.3,
+      safetyFactor: 1.14,
       equipmentBreakdown: {
         ac: 9500,
-        lighting: 1450,
-        refrigeration: 2250,
-        other: 500,
+        lighting: 0, // Included in Others
+        refrigeration: 0, // Included in Others
+        other: 4200,
         totalEquipment: 13700
       }
     };
@@ -388,12 +382,13 @@ const EnergyReport: React.FC = () => {
     }
   }, []);
 
-  // Load breakdown data for pie chart
-  const loadBreakdownData = [
-    { name: 'Tải nhiệt người', value: 360, color: '#3B82F6' },
-    { name: 'Ánh sáng', value: 500, color: '#10B981' },
-    { name: 'Thiết bị', value: 800, color: '#F59E0B' },
-    { name: 'Vỏ công trình', value: 600, color: '#EF4444' }
+  // Load breakdown data for pie chart - using real API data
+  const loadBreakdownData = loadAnalysisData?.equipmentBreakdown ? [
+    { name: 'AC (Máy lạnh)', value: loadAnalysisData.equipmentBreakdown.ac, color: '#3B82F6' },
+    { name: 'Others (Thiết bị khác)', value: loadAnalysisData.equipmentBreakdown.other, color: '#10B981' }
+  ] : [
+    { name: 'AC (Máy lạnh)', value: 9500, color: '#3B82F6' },
+    { name: 'Others (Thiết bị khác)', value: 4200, color: '#10B981' }
   ];
 
   const handleAnalyze = useCallback(async (e: React.FormEvent) => {
@@ -640,26 +635,31 @@ const EnergyReport: React.FC = () => {
                   <div className="bg-yellow-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-gray-900 mb-3">Phân tích tải nhiệt</h3>
                     <div className="space-y-2 text-sm">
-                      <div className="font-medium text-blue-700 mb-2">Tải từ thiết bị (API):</div>
+                      <div className="font-medium text-blue-700 mb-2">Tải từ thiết bị (đọc từ API):</div>
                       {loadAnalysisData?.equipmentBreakdown && (
                         <div className="ml-2 space-y-1">
-                          <div>• Máy lạnh: {loadAnalysisData.equipmentBreakdown.ac} W</div>
-                          <div>• Đèn chiếu sáng: {loadAnalysisData.equipmentBreakdown.lighting} W</div>
-                          <div>• Tủ lạnh/mát: {loadAnalysisData.equipmentBreakdown.refrigeration} W</div>
-                          <div>• Thiết bị khác: {loadAnalysisData.equipmentBreakdown.other} W</div>
-                          <div className="font-medium">→ Tổng thiết bị: {loadAnalysisData.equipmentBreakdown.totalEquipment} W</div>
+                          <div className="flex justify-between">
+                            <span>• AC (Máy lạnh):</span>
+                            <span className="font-medium">{loadAnalysisData.equipmentBreakdown.ac.toLocaleString()} W</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>• Others (Thiết bị khác):</span>
+                            <span className="font-medium">{loadAnalysisData.equipmentBreakdown.other.toLocaleString()} W</span>
+                          </div>
+                          <div className="border-t pt-2 mt-2 flex justify-between font-semibold text-gray-800">
+                            <span>→ Tổng tải thiết bị:</span>
+                            <span>{loadAnalysisData.equipmentBreakdown.totalEquipment.toLocaleString()} W ({(loadAnalysisData.equipmentBreakdown.totalEquipment/1000).toFixed(2)} kW)</span>
+                          </div>
                         </div>
                       )}
-                      <div className="font-medium text-blue-700 mb-2 mt-3">Tải ước tính khác:</div>
-                      <div className="ml-2 space-y-1">
-                        <div>• Tải nhiệt người: {loadAnalysisData?.heatLoadBredown.people || 0} W</div>
-                        <div>• Tải từ vỏ công trình: {loadAnalysisData?.heatLoadBredown.building || 0} W</div>
-                      </div>
-                      <div className="border-t pt-2 mt-2 font-semibold">
-                        → Tổng tải nhiệt: ~{loadAnalysisData?.heatLoadBredown.total || 0} W ≈ {((loadAnalysisData?.heatLoadBredown.total || 0)/1000).toFixed(2)} kW
-                      </div>
-                      <div className="font-semibold text-green-700">
-                        → Hệ số an toàn ~{loadAnalysisData?.safetyFactor?.toFixed(1) || 'N/A'} lần, thiết kế phù hợp.
+                      <div className="border-t pt-3 mt-3">
+                        <div className="flex justify-between font-semibold text-green-700">
+                          <span>→ Hệ số an toàn:</span>
+                          <span>~{loadAnalysisData?.safetyFactor?.toFixed(1) || 'N/A'} lần</span>
+                        </div>
+                        <div className="text-xs text-gray-600 mt-1">
+                          (Công suất lạnh / Tổng tải thiết bị)
+                        </div>
                       </div>
                     </div>
                   </div>
