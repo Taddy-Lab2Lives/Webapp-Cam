@@ -27,12 +27,7 @@ import {
 
 // Services & Utils
 import { BenkonAPI } from '../services/api';
-import { 
-  processEnergyDataForChart,
-  calculateStats,
-  validateDateRange,
-  getDefaultDateRange
-} from '../utils/dataProcessing';
+// Removed unused imports from utils
 
 // Types
 import { 
@@ -68,6 +63,13 @@ interface LoadAnalysis {
     total: number;
   };
   safetyFactor: number;
+  equipmentBreakdown?: {
+    ac: number;
+    lighting: number;
+    refrigeration: number;
+    other: number;
+    totalEquipment: number;
+  };
 }
 
 interface DailyConsumption {
@@ -96,16 +98,18 @@ const EnergyReport: React.FC = () => {
   });
 
   const [formData, setFormData] = useState<FormData>(() => {
-    const { startDate, endDate } = getDefaultDateRange();
+    const today = new Date().toISOString().split('T')[0];
     return {
       orgId: '7411698114757914624',
       locId: '7407763056947015680',
-      startDate,
-      endDate
+      startDate: today,
+      endDate: today
     };
   });
 
-  const [selectedDate, setSelectedDate] = useState('2025-07-10');
+  const [selectedDate, setSelectedDate] = useState(() => {
+    return new Date().toISOString().split('T')[0];
+  });
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [equipmentInfo, setEquipmentInfo] = useState<EquipmentInfo | null>(null);
   const [hourlyData, setHourlyData] = useState<any[]>([]);
@@ -160,18 +164,24 @@ const EnergyReport: React.FC = () => {
   
   const processRealData = (locationData: any, equipmentData: any[], energyData: any) => {
     // Process equipment info
-    const firstEquipment = equipmentData[0] || {};
     const area = locationData?.area_in_m2 || 30;
+    
+    // Calculate total BTU and rated power for all AC equipment
+    const acEquipment = equipmentData.filter(eq => eq.type && (eq.type.toLowerCase().includes('ac') || eq.type.toLowerCase().includes('air')));
+    const totalBTU = acEquipment.reduce((sum, eq) => sum + (eq.btu || 0), 0);
+    const totalRatedPower = acEquipment.reduce((sum, eq) => sum + (eq.rated_power_w || 0), 0);
+    // Removed unused firstEquipment variable
+    
     const processedEquipmentInfo: EquipmentInfo = {
       location: locationData?.loc_name || 'Unknown Location',
       area: `${area} m²`,
       dimensions: `${Math.sqrt(area).toFixed(1)}m x ${Math.sqrt(area).toFixed(1)}m`,
       height: '3.2 m',
-      equipmentCode: firstEquipment.equip_id || 'N/A',
-      brand: 'Unknown Brand', // Equipment interface doesn't have brand
-      type: firstEquipment.type || 'Unknown',
-      coolingCapacity: `${firstEquipment.btu || 'N/A'} BTU`,
-      ratedPower: `${firstEquipment.rated_power_w ? (firstEquipment.rated_power_w / 1000).toFixed(1) : 'N/A'} kW`,
+      equipmentCode: `${acEquipment.length} AC units`,
+      brand: 'Multiple Brands',
+      type: 'Air Conditioning System',
+      coolingCapacity: totalBTU > 0 ? `${totalBTU.toLocaleString()} BTU (${(totalBTU / 3412).toFixed(1)} kW)` : 'N/A',
+      ratedPower: totalRatedPower > 0 ? `${(totalRatedPower / 1000).toFixed(1)} kW` : 'N/A',
       serviceArea: `${area} m²`
     };
     setEquipmentInfo(processedEquipmentInfo);
@@ -189,10 +199,22 @@ const EnergyReport: React.FC = () => {
       : generateSampleHourlyData();
     setHourlyData(processedHourlyData);
     
-    // Calculate load analysis
-    const coolingCapacityBTU = firstEquipment.btu || 18000;
-    const coolingCapacity = coolingCapacityBTU / 3412; // Convert BTU to kW (1 kW = 3412 BTU)
+    // Calculate load analysis using total cooling capacity
+    const coolingCapacity = totalBTU / 3412; // Convert BTU to kW (1 kW = 3412 BTU)
     const coolingLoadPerArea = (coolingCapacity * 1000) / area; // Convert kW to W
+    
+    // Calculate actual equipment loads from API data
+    const acLoad = acEquipment.reduce((sum, eq) => sum + (eq.rated_power_w || 0), 0);
+    const lightingEquipment = equipmentData.filter(eq => eq.type && (eq.type.toLowerCase().includes('light') || eq.type.toLowerCase().includes('led')));
+    const lightingLoad = lightingEquipment.reduce((sum, eq) => sum + (eq.rated_power_w || 0), 0);
+    const refrigerationEquipment = equipmentData.filter(eq => eq.type && (eq.type.toLowerCase().includes('refriger') || eq.type.toLowerCase().includes('freezer') || eq.type.toLowerCase().includes('cooler')));
+    const refrigerationLoad = refrigerationEquipment.reduce((sum, eq) => sum + (eq.rated_power_w || 0), 0);
+    const otherEquipment = equipmentData.filter(eq => !acEquipment.includes(eq) && !lightingEquipment.includes(eq) && !refrigerationEquipment.includes(eq));
+    const otherLoad = otherEquipment.reduce((sum, eq) => sum + (eq.rated_power_w || 0), 0);
+    
+    const totalEquipmentLoad = acLoad + lightingLoad + refrigerationLoad + otherLoad;
+    const estimatedPeopleLoad = Math.round(area * 12); // 12W per m² for people
+    const estimatedBuildingLoad = Math.round(area * 18); // 18W per m² for building envelope
     
     const processedLoadAnalysis: LoadAnalysis = {
       coolingLoadPerArea,
@@ -200,13 +222,21 @@ const EnergyReport: React.FC = () => {
       benkonRecommendation: '160 W/m²',
       designStatus: coolingLoadPerArea >= 150 && coolingLoadPerArea <= 200 ? 'Đạt yêu cầu' : 'Cần điều chỉnh',
       heatLoadBredown: {
-        people: Math.round(area * 12), // 12W per m² for people
-        lighting: Math.round(area * 15), // 15W per m² for lighting
-        equipment: Math.round(area * 20), // 20W per m² for equipment
-        building: Math.round(area * 18), // 18W per m² for building
-        total: Math.round(area * 65) // Total heat load
+        people: estimatedPeopleLoad,
+        lighting: lightingLoad,
+        equipment: refrigerationLoad + otherLoad,
+        building: estimatedBuildingLoad,
+        total: estimatedPeopleLoad + lightingLoad + refrigerationLoad + otherLoad + estimatedBuildingLoad
       },
-      safetyFactor: coolingCapacity * 1000 / (area * 65)
+      safetyFactor: coolingCapacity * 1000 / (estimatedPeopleLoad + lightingLoad + refrigerationLoad + otherLoad + estimatedBuildingLoad),
+      // Add detailed equipment breakdown
+      equipmentBreakdown: {
+        ac: acLoad,
+        lighting: lightingLoad,
+        refrigeration: refrigerationLoad,
+        other: otherLoad,
+        totalEquipment: totalEquipmentLoad
+      }
     };
     setLoadAnalysisData(processedLoadAnalysis);
     
@@ -285,7 +315,14 @@ const EnergyReport: React.FC = () => {
         building: 600,
         total: 2260
       },
-      safetyFactor: 2.3
+      safetyFactor: 2.3,
+      equipmentBreakdown: {
+        ac: 9500,
+        lighting: 1450,
+        refrigeration: 2250,
+        other: 500,
+        totalEquipment: 13700
+      }
     };
     setLoadAnalysisData(sampleLoadAnalysis);
     
@@ -421,7 +458,7 @@ const EnergyReport: React.FC = () => {
           </div>
 
           {/* Controls */}
-          <form onSubmit={handleAnalyze} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+          <form onSubmit={handleAnalyze} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Organization ID
@@ -450,28 +487,51 @@ const EnergyReport: React.FC = () => {
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Từ ngày
+                Ngày phân tích
               </label>
-              <input
-                type="date"
-                value={formData.startDate}
-                onChange={(e) => handleInputChange('startDate', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Đến ngày
-              </label>
-              <input
-                type="date"
-                value={formData.endDate}
-                onChange={(e) => handleInputChange('endDate', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                required
-              />
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const currentDate = new Date(selectedDate);
+                    currentDate.setDate(currentDate.getDate() - 1);
+                    const newDate = currentDate.toISOString().split('T')[0];
+                    setSelectedDate(newDate);
+                    handleInputChange('startDate', newDate);
+                    handleInputChange('endDate', newDate);
+                  }}
+                  className="px-2 py-2 border border-gray-300 rounded-l-md bg-gray-50 hover:bg-gray-100 text-sm"
+                  title="Ngày trước"
+                >
+                  ←
+                </button>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => {
+                    setSelectedDate(e.target.value);
+                    handleInputChange('startDate', e.target.value);
+                    handleInputChange('endDate', e.target.value);
+                  }}
+                  className="flex-1 px-3 py-2 border-t border-b border-gray-300 text-sm"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const currentDate = new Date(selectedDate);
+                    currentDate.setDate(currentDate.getDate() + 1);
+                    const newDate = currentDate.toISOString().split('T')[0];
+                    setSelectedDate(newDate);
+                    handleInputChange('startDate', newDate);
+                    handleInputChange('endDate', newDate);
+                  }}
+                  className="px-2 py-2 border border-gray-300 rounded-r-md bg-gray-50 hover:bg-gray-100 text-sm"
+                  title="Ngày sau"
+                >
+                  →
+                </button>
+              </div>
             </div>
             
             <button
@@ -580,10 +640,21 @@ const EnergyReport: React.FC = () => {
                   <div className="bg-yellow-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-gray-900 mb-3">Phân tích tải nhiệt</h3>
                     <div className="space-y-2 text-sm">
-                      <div>- Tải nhiệt người: {loadAnalysisData?.heatLoadBredown.people || 0} W</div>
-                      <div>- Tải từ ánh sáng: {loadAnalysisData?.heatLoadBredown.lighting || 0} W</div>
-                      <div>- Tải từ thiết bị: {loadAnalysisData?.heatLoadBredown.equipment || 0} W</div>
-                      <div>- Tải từ vỏ công trình: {loadAnalysisData?.heatLoadBredown.building || 0} W</div>
+                      <div className="font-medium text-blue-700 mb-2">Tải từ thiết bị (API):</div>
+                      {loadAnalysisData?.equipmentBreakdown && (
+                        <div className="ml-2 space-y-1">
+                          <div>• Máy lạnh: {loadAnalysisData.equipmentBreakdown.ac} W</div>
+                          <div>• Đèn chiếu sáng: {loadAnalysisData.equipmentBreakdown.lighting} W</div>
+                          <div>• Tủ lạnh/mát: {loadAnalysisData.equipmentBreakdown.refrigeration} W</div>
+                          <div>• Thiết bị khác: {loadAnalysisData.equipmentBreakdown.other} W</div>
+                          <div className="font-medium">→ Tổng thiết bị: {loadAnalysisData.equipmentBreakdown.totalEquipment} W</div>
+                        </div>
+                      )}
+                      <div className="font-medium text-blue-700 mb-2 mt-3">Tải ước tính khác:</div>
+                      <div className="ml-2 space-y-1">
+                        <div>• Tải nhiệt người: {loadAnalysisData?.heatLoadBredown.people || 0} W</div>
+                        <div>• Tải từ vỏ công trình: {loadAnalysisData?.heatLoadBredown.building || 0} W</div>
+                      </div>
                       <div className="border-t pt-2 mt-2 font-semibold">
                         → Tổng tải nhiệt: ~{loadAnalysisData?.heatLoadBredown.total || 0} W ≈ {((loadAnalysisData?.heatLoadBredown.total || 0)/1000).toFixed(2)} kW
                       </div>
