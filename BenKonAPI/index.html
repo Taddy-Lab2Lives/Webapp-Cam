@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Benkon Energy API Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2C3E50 0%, #34495E 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 70vh;
+        }
+        
+        .left-panel {
+            padding: 30px;
+            background: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+        }
+        
+        .right-panel {
+            padding: 30px;
+            background: white;
+        }
+        
+        .endpoint-section {
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border-left: 4px solid #3498db;
+        }
+        
+        .endpoint-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e1e8ed;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .results-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .results-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        #results {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .endpoint-tabs {
+            display: flex;
+            background: #e9ecef;
+            border-radius: 10px 10px 0 0;
+            margin-bottom: 0;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            border-radius: 10px 10px 0 0;
+        }
+        
+        .tab.active {
+            background: white;
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
+        }
+        
+        .tab:hover:not(.active) {
+            background: #dee2e6;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .info-box {
+            background: #e8f4fd;
+            border: 1px solid #bee5eb;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #0c5460;
+        }
+        
+        .info-box strong {
+            color: #055160;
+        }
+        
+        .method-badge {
+            background: #28a745;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .endpoint-tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔌 Benkon Energy API Tester</h1>
+            <p>Test all endpoints of the Benkon Energy API with interactive forms</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="left-panel">
+                <div class="info-box">
+                    <strong>Base URL:</strong> https://data-analytics-868579264401.us-central1.run.app<br>
+                    <strong>Authentication:</strong> None required<br>
+                    <strong>Date Format:</strong> YYYY-MM-DD (max 30 days range)
+                </div>
+                
+                <div class="endpoint-tabs">
+                    <div class="tab active" onclick="switchTab('locations')">Locations</div>
+                    <div class="tab" onclick="switchTab('energy')">Energy Data</div>
+                    <div class="tab" onclick="switchTab('equipment')">Equipment</div>
+                </div>
+                
+                <!-- Locations Tab -->
+                <div id="locations-tab" class="tab-content active">
+                    <div class="endpoint-section">
+                        <h3><span class="method-badge">GET</span>List All Locations</h3>
+                        <div class="form-group">
+                            <label for="org-id-locations">Organization ID:</label>
+                            <input type="text" id="org-id-locations" value="123" placeholder="Enter organization ID">
+                        </div>
+                        <button class="btn" onclick="listLocations()">Get Locations</button>
+                    </div>
+                    
+                    <div class="endpoint-section">
+                        <h3><span class="method-badge">GET</span>Get Specific Location</h3>
+                        <div class="form-group">
+                            <label for="org-id-single">Organization ID:</label>
+                            <input type="text" id="org-id-single" value="123" placeholder="Enter organization ID">
+                        </div>
+                        <div class="form-group">
+                            <label for="loc-id-single">Location ID:</label>
+                            <input type="text" id="loc-id-single" value="456" placeholder="Enter location ID">
+                        </div>
+                        <button class="btn" onclick="getLocation()">Get Location</button>
+                    </div>
+                    
+                    <div class="endpoint-section">
+                        <h3><span class="method-badge">GET</span>API Documentation</h3>
+                        <button class="btn" onclick="getApiDocs()">Get API Docs</button>
+                    </div>
+                </div>
+                
+                <!-- Energy Data Tab -->
+                <div id="energy-tab" class="tab-content">
+                    <div class="endpoint-section">
+                        <h3><span class="method-badge">GET</span>Location Hourly Energy</h3>
+                        <div class="form-group">
+                            <label for="org-id-location-energy">Organization ID:</label>
+                            <input type="text" id="org-id-location-energy" value="123" placeholder="Enter organization ID">
+                        </div>
+                        <div class="form-group">
+                            <label for="loc-id-energy">Location ID:</label>
+                            <input type="text" id="loc-id-energy" value="456" placeholder="Enter location ID">
+                        </div>
+                        <div class="form-group">
+                            <label for="start-date-location">Start Date:</label>
+                            <input type="date" id="start-date-location" value="2025-01-15">
+                        </div>
+                        <div class="form-group">
+                            <label for="end-date-location">End Date:</label>
+                            <input type="date" id="end-date-location" value="2025-01-17">
+                        </div>
+                        <button class="btn" onclick="getLocationEnergy()">Get Energy Data</button>
+                    </div>
+                </div>
+                
+                <!-- Equipment Tab -->
+                <div id="equipment-tab" class="tab-content">
+                    <div class="endpoint-section">
+                        <h3><span class="method-badge">GET</span>List Equipment</h3>
+                        <div class="form-group">
+                            <label for="org-id-equips">Organization ID:</label>
+                            <input type="text" id="org-id-equips" value="123" placeholder="Enter organization ID">
+                        </div>
+                        <div class="form-group">
+                            <label for="loc-id-equips">Location ID:</label>
+                            <input type="text" id="loc-id-equips" value="456" placeholder="Enter location ID">
+                        </div>
+                        <button class="btn" onclick="listEquipment()">Get Equipment</button>
+                    </div>
+                    
+                    <div class="endpoint-section">
+                        <h3><span class="method-badge">GET</span>Equipment Energy Data</h3>
+                        <div class="form-group">
+                            <label for="org-id-equip-energy">Organization ID:</label>
+                            <input type="text" id="org-id-equip-energy" value="123" placeholder="Enter organization ID">
+                        </div>
+                        <div class="form-group">
+                            <label for="loc-id-equip-energy">Location ID:</label>
+                            <input type="text" id="loc-id-equip-energy" value="456" placeholder="Enter location ID">
+                        </div>
+                        <div class="form-group">
+                            <label for="equip-id-energy">Equipment ID:</label>
+                            <input type="text" id="equip-id-energy" value="AC001" placeholder="Enter equipment ID">
+                        </div>
+                        <div class="form-group">
+                            <label for="start-date-equip">Start Date:</label>
+                            <input type="date" id="start-date-equip" value="2025-01-15">
+                        </div>
+                        <div class="form-group">
+                            <label for="end-date-equip">End Date:</label>
+                            <input type="date" id="end-date-equip" value="2025-01-17">
+                        </div>
+                        <button class="btn" onclick="getEquipmentEnergy()">Get Equipment Energy</button>
+                    </div>
+                    
+                    <div class="endpoint-section">
+                        <h3><span class="method-badge">GET</span>All Equipment Energy</h3>
+                        <div class="form-group">
+                            <label for="org-id-all-equip">Organization ID:</label>
+                            <input type="text" id="org-id-all-equip" value="123" placeholder="Enter organization ID">
+                        </div>
+                        <div class="form-group">
+                            <label for="loc-id-all-equip">Location ID:</label>
+                            <input type="text" id="loc-id-all-equip" value="456" placeholder="Enter location ID">
+                        </div>
+                        <div class="form-group">
+                            <label for="start-date-all">Start Date:</label>
+                            <input type="date" id="start-date-all" value="2025-01-15">
+                        </div>
+                        <div class="form-group">
+                            <label for="end-date-all">End Date:</label>
+                            <input type="date" id="end-date-all" value="2025-01-17">
+                        </div>
+                        <button class="btn" onclick="getAllEquipmentEnergy()">Get All Equipment Energy</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="right-panel">
+                <div class="results-section">
+                    <h3>📊 API Response</h3>
+                    <div id="results">Select an endpoint and click a button to see the API response here...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = 'https://data-analytics-868579264401.us-central1.run.app';
+        
+        function switchTab(tabName) {
+            // Remove active class from all tabs and content
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Add active class to clicked tab and corresponding content
+            event.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+        
+        function displayResult(data, url, status) {
+            const resultsDiv = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            let statusColor = status >= 200 && status < 300 ? '#27ae60' : '#e74c3c';
+            
+            resultsDiv.innerHTML = `
+<span style="color: #3498db;">[${timestamp}]</span> <span style="color: ${statusColor};">HTTP ${status}</span>
+<span style="color: #f39c12;">GET</span> ${url}
+
+<span style="color: #2ecc71;">Response:</span>
+${JSON.stringify(data, null, 2)}`;
+        }
+        
+        function displayError(error, url) {
+            const resultsDiv = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            resultsDiv.innerHTML = `
+<span style="color: #3498db;">[${timestamp}]</span> <span style="color: #e74c3c;">ERROR</span>
+<span style="color: #f39c12;">GET</span> ${url}
+
+<span style="color: #e74c3c;">Error:</span>
+${error.message || error}`;
+        }
+        
+        async function makeRequest(endpoint) {
+            const url = BASE_URL + endpoint;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                displayResult(data, url, response.status);
+            } catch (error) {
+                displayError(error, url);
+            }
+        }
+        
+        function listLocations() {
+            const orgId = document.getElementById('org-id-locations').value;
+            if (!orgId) {
+                alert('Please enter an Organization ID');
+                return;
+            }
+            makeRequest(`/orgs/${orgId}/locations`);
+        }
+        
+        function getLocation() {
+            const orgId = document.getElementById('org-id-single').value;
+            const locId = document.getElementById('loc-id-single').value;
+            
+            if (!orgId || !locId) {
+                alert('Please enter both Organization ID and Location ID');
+                return;
+            }
+            
+            makeRequest(`/orgs/${orgId}/locations/${locId}`);
+        }
+        
+        function getApiDocs() {
+            makeRequest('/');
+        }
+        
+        function getLocationEnergy() {
+            const orgId = document.getElementById('org-id-location-energy').value;
+            const locId = document.getElementById('loc-id-energy').value;
+            const startDate = document.getElementById('start-date-location').value;
+            const endDate = document.getElementById('end-date-location').value;
+            
+            if (!orgId || !locId || !startDate || !endDate) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            makeRequest(`/orgs/${orgId}/locations/${locId}/data/hourlyEnergy?startDate=${startDate}&endDate=${endDate}`);
+        }
+        
+        function listEquipment() {
+            const orgId = document.getElementById('org-id-equips').value;
+            const locId = document.getElementById('loc-id-equips').value;
+            
+            if (!orgId || !locId) {
+                alert('Please enter both Organization ID and Location ID');
+                return;
+            }
+            
+            makeRequest(`/orgs/${orgId}/locations/${locId}/equips`);
+        }
+        
+        function getEquipmentEnergy() {
+            const orgId = document.getElementById('org-id-equip-energy').value;
+            const locId = document.getElementById('loc-id-equip-energy').value;
+            const equipId = document.getElementById('equip-id-energy').value;
+            const startDate = document.getElementById('start-date-equip').value;
+            const endDate = document.getElementById('end-date-equip').value;
+            
+            if (!orgId || !locId || !equipId || !startDate || !endDate) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            makeRequest(`/orgs/${orgId}/locations/${locId}/equips/${equipId}/data/hourlyEnergy?startDate=${startDate}&endDate=${endDate}`);
+        }
+        
+        function getAllEquipmentEnergy() {
+            const orgId = document.getElementById('org-id-all-equip').value;
+            const locId = document.getElementById('loc-id-all-equip').value;
+            const startDate = document.getElementById('start-date-all').value;
+            const endDate = document.getElementById('end-date-all').value;
+            
+            if (!orgId || !locId || !startDate || !endDate) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            makeRequest(`/orgs/${orgId}/locations/${locId}/equipsData/hourlyEnergy?startDate=${startDate}&endDate=${endDate}`);
+        }
+        
+        // Set default dates to today and 3 days ago
+        window.onload = function() {
+            const today = new Date();
+            const threeDaysAgo = new Date();
+            threeDaysAgo.setDate(today.getDate() - 3);
+            
+            const todayStr = today.toISOString().split('T')[0];
+            const threeDaysAgoStr = threeDaysAgo.toISOString().split('T')[0];
+            
+            // Set all date inputs
+            document.querySelectorAll('input[type="date"]').forEach(input => {
+                if (input.id.includes('start')) {
+                    input.value = threeDaysAgoStr;
+                } else {
+                    input.value = todayStr;
+                }
+            });
+        };
+    </script>
+</body>
+</html>
