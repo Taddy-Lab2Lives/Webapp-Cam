@@ -29,6 +29,25 @@
                     </div>
                 </div>
 
+                <!-- API Token Input -->
+                <div class="token-input-section" id="token-section">
+                    <div class="token-container">
+                        <label for="api-token-input" class="token-label">
+                            🔑 Hugging Face API Token (bắt buộc):
+                        </label>
+                        <div class="token-input-group">
+                            <input type="password" id="api-token-input" class="token-input" 
+                                   placeholder="Nhập token của bạn (hf_...)">
+                            <button id="toggle-token-btn" class="btn-toggle-token" type="button">👁️</button>
+                        </div>
+                        <small class="token-help">
+                            <a href="https://huggingface.co/settings/tokens" target="_blank">
+                                Lấy token miễn phí tại đây ↗️
+                            </a>
+                        </small>
+                    </div>
+                </div>
+
                 <!-- Camera Controls -->
                 <div class="camera-controls">
                     <button id="start-camera-btn" class="btn btn-primary">

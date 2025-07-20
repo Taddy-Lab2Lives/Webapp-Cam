@@ -40,6 +40,10 @@ class CameraObjectAnalyzer {
         this.errorMessage = document.getElementById('error-message');
         this.summary = document.getElementById('summary');
         this.objectsList = document.getElementById('objects-list');
+        
+        // Token input elements
+        this.tokenInput = document.getElementById('api-token-input');
+        this.toggleTokenBtn = document.getElementById('toggle-token-btn');
     }
 
     // Thiết lập event listeners
@@ -50,6 +54,13 @@ class CameraObjectAnalyzer {
         this.analyzeBtn.addEventListener('click', () => this.analyzeCurrentImage());
         this.retryBtn.addEventListener('click', () => this.retryAnalysis());
         this.fileInput.addEventListener('change', (e) => this.handleFileUpload(e));
+        
+        // Token input events
+        this.toggleTokenBtn.addEventListener('click', () => this.toggleTokenVisibility());
+        this.tokenInput.addEventListener('input', () => this.saveTokenToStorage());
+        
+        // Load saved token on init
+        this.loadTokenFromStorage();
     }
 
     // Kiểm tra hỗ trợ camera
@@ -200,6 +211,13 @@ class CameraObjectAnalyzer {
 
     // Gọi Hugging Face API với retry logic
     async callHuggingFaceAPI(imageBlob, attempt = 1) {
+        // Lấy token từ input hoặc config
+        const apiToken = this.tokenInput.value.trim() || CONFIG.HUGGINGFACE.API_TOKEN;
+        
+        if (!apiToken) {
+            throw new Error('Vui lòng nhập Hugging Face API token để sử dụng tính năng này.');
+        }
+        
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), CONFIG.HUGGINGFACE.TIMEOUT);
@@ -207,7 +225,7 @@ class CameraObjectAnalyzer {
             const response = await fetch(CONFIG.HUGGINGFACE.API_URL, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${CONFIG.HUGGINGFACE.API_TOKEN}`
+                    'Authorization': `Bearer ${apiToken}`
                 },
                 body: imageBlob,
                 signal: controller.signal
@@ -371,6 +389,31 @@ class CameraObjectAnalyzer {
             this.analyzeCurrentImage();
         } else {
             this.hideError();
+        }
+    }
+
+    // Toggle token visibility
+    toggleTokenVisibility() {
+        const isPassword = this.tokenInput.type === 'password';
+        this.tokenInput.type = isPassword ? 'text' : 'password';
+        this.toggleTokenBtn.textContent = isPassword ? '🙈' : '👁️';
+    }
+
+    // Save token to localStorage
+    saveTokenToStorage() {
+        const token = this.tokenInput.value.trim();
+        if (token) {
+            localStorage.setItem('hf_api_token', token);
+        } else {
+            localStorage.removeItem('hf_api_token');
+        }
+    }
+
+    // Load token from localStorage
+    loadTokenFromStorage() {
+        const savedToken = localStorage.getItem('hf_api_token');
+        if (savedToken) {
+            this.tokenInput.value = savedToken;
         }
     }
 }

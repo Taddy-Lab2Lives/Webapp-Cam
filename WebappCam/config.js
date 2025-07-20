@@ -3,7 +3,7 @@ const CONFIG = {
     // Hugging Face API
     HUGGINGFACE: {
         API_URL: 'https://api-inference.huggingface.co/models/facebook/detr-resnet-50',
-        API_TOKEN: '', // Thêm token Hugging Face của bạn tại đây
+        API_TOKEN: '', // Add your Hugging Face token here
         RETRY_ATTEMPTS: 3,
         RETRY_DELAY: 2000, // 2 giây
         TIMEOUT: 30000 // 30 giây
