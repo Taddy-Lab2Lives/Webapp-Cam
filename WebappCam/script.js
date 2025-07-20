@@ -44,6 +44,10 @@ class CameraObjectAnalyzer {
         // Token input elements
         this.tokenInput = document.getElementById('api-token-input');
         this.toggleTokenBtn = document.getElementById('toggle-token-btn');
+        
+        // Detection overlay canvas
+        this.overlayCanvas = document.getElementById('detection-overlay');
+        this.overlayCtx = this.overlayCanvas.getContext('2d');
     }
 
     // Thiết lập event listeners
@@ -61,6 +65,13 @@ class CameraObjectAnalyzer {
         
         // Load saved token on init
         this.loadTokenFromStorage();
+        
+        // Handle window resize for overlay canvas
+        window.addEventListener('resize', () => {
+            if (this.capturedImageContainer.style.display !== 'none') {
+                setTimeout(() => this.setupOverlayCanvas(), 100);
+            }
+        });
     }
 
     // Kiểm tra hỗ trợ camera
@@ -159,17 +170,43 @@ class CameraObjectAnalyzer {
     // Hiển thị ảnh đã chụp/upload
     showCapturedImage(imageDataUrl) {
         this.capturedImage.src = imageDataUrl;
+        
+        // Thiết lập overlay canvas khi ảnh load xong
+        this.capturedImage.onload = () => {
+            this.setupOverlayCanvas();
+        };
+        
         this.capturedImageContainer.style.display = 'block';
         this.hideResults();
         this.hideError();
+        this.clearDetectionOverlay();
         
         // Scroll to image
         this.capturedImageContainer.scrollIntoView({ behavior: 'smooth' });
     }
 
+    // Thiết lập kích thước overlay canvas
+    setupOverlayCanvas() {
+        const rect = this.capturedImage.getBoundingClientRect();
+        const style = window.getComputedStyle(this.capturedImage);
+        
+        this.overlayCanvas.width = this.capturedImage.naturalWidth;
+        this.overlayCanvas.height = this.capturedImage.naturalHeight;
+        this.overlayCanvas.style.width = this.capturedImage.offsetWidth + 'px';
+        this.overlayCanvas.style.height = this.capturedImage.offsetHeight + 'px';
+    }
+
+    // Xóa detection overlay
+    clearDetectionOverlay() {
+        if (this.overlayCtx) {
+            this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
+        }
+    }
+
     // Ẩn ảnh đã chụp
     hideCapturedImage() {
         this.capturedImageContainer.style.display = 'none';
+        this.clearDetectionOverlay();
     }
 
     // Phân tích ảnh hiện tại
@@ -282,6 +319,9 @@ class CameraObjectAnalyzer {
             return;
         }
 
+        // Vẽ bounding boxes lên ảnh
+        this.drawDetectionBoxes(filteredResults);
+
         // Hiển thị tóm tắt
         this.summary.innerHTML = `
             <strong>🎯 Phát hiện ${filteredResults.length} đối tượng</strong>
@@ -303,6 +343,75 @@ class CameraObjectAnalyzer {
         
         // Scroll to results
         this.resultsContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Vẽ bounding boxes và labels lên ảnh
+    drawDetectionBoxes(detections) {
+        if (!this.overlayCtx || !this.overlayCanvas.width) return;
+
+        // Xóa canvas trước
+        this.clearDetectionOverlay();
+
+        const imageWidth = this.overlayCanvas.width;
+        const imageHeight = this.overlayCanvas.height;
+
+        // Màu sắc cho từng loại object
+        const colors = [
+            '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+            '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
+        ];
+
+        detections.forEach((detection, index) => {
+            if (!detection.box) return;
+
+            const box = detection.box;
+            const color = colors[index % colors.length];
+            
+            // Tính toán tọa độ bounding box
+            const x = box.xmin * imageWidth;
+            const y = box.ymin * imageHeight;
+            const width = (box.xmax - box.xmin) * imageWidth;
+            const height = (box.ymax - box.ymin) * imageHeight;
+
+            // Vẽ bounding box
+            this.overlayCtx.strokeStyle = color;
+            this.overlayCtx.lineWidth = 3;
+            this.overlayCtx.strokeRect(x, y, width, height);
+
+            // Chuẩn bị text
+            const label = UTILS.translateObjectName(detection.label);
+            const confidence = UTILS.formatConfidence(detection.score);
+            const text = `${label} ${confidence}`;
+
+            // Thiết lập font
+            const fontSize = Math.max(12, Math.min(16, imageWidth / 50));
+            this.overlayCtx.font = `bold ${fontSize}px Arial`;
+            this.overlayCtx.fillStyle = color;
+
+            // Đo kích thước text
+            const textMetrics = this.overlayCtx.measureText(text);
+            const textWidth = textMetrics.width;
+            const textHeight = fontSize;
+
+            // Vẽ background cho text
+            const padding = 4;
+            const bgX = x;
+            const bgY = y - textHeight - padding * 2;
+            const bgWidth = textWidth + padding * 2;
+            const bgHeight = textHeight + padding * 2;
+
+            // Đảm bảo label không bị cắt
+            const finalBgY = bgY < 0 ? y + height : bgY;
+            const finalTextY = bgY < 0 ? y + height + textHeight : y - padding;
+
+            // Vẽ background
+            this.overlayCtx.fillStyle = color;
+            this.overlayCtx.fillRect(bgX, finalBgY, bgWidth, bgHeight);
+
+            // Vẽ text
+            this.overlayCtx.fillStyle = '#FFFFFF';
+            this.overlayCtx.fillText(text, bgX + padding, finalTextY);
+        });
     }
 
     // Chuyển đổi data URL thành blob

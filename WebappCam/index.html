@@ -81,7 +81,10 @@
                 <div class="analysis-container">
                     <div id="captured-image-container" class="captured-image-container" style="display: none;">
                         <h3>Ảnh đã chụp:</h3>
-                        <img id="captured-image" class="captured-image" alt="Ảnh đã chụp">
+                        <div class="image-canvas-container">
+                            <img id="captured-image" class="captured-image" alt="Ảnh đã chụp">
+                            <canvas id="detection-overlay" class="detection-overlay"></canvas>
+                        </div>
                         <button id="analyze-btn" class="btn btn-analyze">
                             <span class="btn-icon">🔍</span>
                             Phân tích ảnh
