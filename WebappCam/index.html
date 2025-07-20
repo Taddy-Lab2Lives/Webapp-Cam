@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Object Analyzer - Phân tích đối tượng qua Camera</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🎯 Camera Object Analyzer</h1>
+            <p>Phân tích đối tượng thông minh với AI</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Camera Section -->
+            <section class="camera-section">
+                <div class="camera-container">
+                    <video id="camera-video" class="camera-video" autoplay playsinline></video>
+                    <canvas id="capture-canvas" class="capture-canvas"></canvas>
+                    <div id="camera-placeholder" class="camera-placeholder">
+                        <div class="placeholder-content">
+                            <span class="camera-icon">📷</span>
+                            <p>Nhấn "Bật Camera" để bắt đầu</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Camera Controls -->
+                <div class="camera-controls">
+                    <button id="start-camera-btn" class="btn btn-primary">
+                        <span class="btn-icon">📹</span>
+                        Bật Camera
+                    </button>
+                    <button id="stop-camera-btn" class="btn btn-secondary" disabled>
+                        <span class="btn-icon">⏹️</span>
+                        Tắt Camera
+                    </button>
+                    <button id="capture-btn" class="btn btn-success" disabled>
+                        <span class="btn-icon">📸</span>
+                        Chụp Ảnh
+                    </button>
+                </div>
+            </section>
+
+            <!-- Upload Section -->
+            <section class="upload-section">
+                <div class="upload-container">
+                    <input type="file" id="file-input" accept="image/*" class="file-input">
+                    <label for="file-input" class="file-label">
+                        <span class="upload-icon">📁</span>
+                        <span class="upload-text">Hoặc tải ảnh từ thiết bị</span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Analysis Section -->
+            <section class="analysis-section">
+                <div class="analysis-container">
+                    <div id="captured-image-container" class="captured-image-container" style="display: none;">
+                        <h3>Ảnh đã chụp:</h3>
+                        <img id="captured-image" class="captured-image" alt="Ảnh đã chụp">
+                        <button id="analyze-btn" class="btn btn-analyze">
+                            <span class="btn-icon">🔍</span>
+                            Phân tích ảnh
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section">
+                <div id="loading" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Đang phân tích ảnh...</p>
+                </div>
+
+                <div id="results-container" class="results-container" style="display: none;">
+                    <h3>Kết quả phân tích:</h3>
+                    <div id="summary" class="summary"></div>
+                    <div id="objects-list" class="objects-list"></div>
+                </div>
+
+                <div id="error-container" class="error-container" style="display: none;">
+                    <div class="error-content">
+                        <span class="error-icon">⚠️</span>
+                        <div id="error-message" class="error-message"></div>
+                        <button id="retry-btn" class="btn btn-retry">Thử lại</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Được xây dựng với ❤️ và AI Technology</p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
